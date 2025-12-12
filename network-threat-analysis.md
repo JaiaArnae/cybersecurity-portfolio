@@ -46,6 +46,9 @@ I created 5 Splunk detection rules to identify:
 - Threat detection and investigation
 - Creating detection rules for security monitoring
 
+## Mitigation Technique Recommendations
+Based on this analysis, I would like to reccommend the identified threat IPs to be blocked, rate limiting on external services, as well as deploying my previously listed threat detection rules in the production SIEM. Additionally, the organization should also disable unecrypted ports e.g. Telnet (Port 23), enable multifactor authentication on SSH and RDP, and consider geo-blocking if international access is not required for business operations.
+
 ## Files
 - `SPL_Queries.md` - All Splunk queries used
 - 2024-08-30-approximately-11-days-of-server-scans-and-probes.pcap - Network capture file from https://malware-traffic-analysis.net/2024/08/30/index.html
