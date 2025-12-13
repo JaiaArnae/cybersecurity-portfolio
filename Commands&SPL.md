@@ -1,24 +1,24 @@
 Commands and SPL Queries
 
-# Powershell
+## Powershell
 cd /path/to/the/pcap
 
 & "C:\Program Files\Wireshark\tshark.exe" -r "2024-08-30-approximately-11-days-of-server-scans-and-probes.pcap" -c 80000 -T fields -e frame.number -e frame.time -e ip.src -e ip.dst -e tcp.srcport -e tcp.dstport -e udp.srcport -e udp.dstport -e tcp.flags -e dns.qry.name -e http.host -e http.request.uri -e ip.proto -E header=y -E separator=, -E quote=d -E occurrence=f | Out-File -FilePath "traffic_analysis.csv" -Encoding UTF8
 Note: SPlink does not like ".", replace them with "_"
 
-# Add as data in Splunk
+## Add as data in Splunk
 
 source="83024ServerScan.csv" index="83024serverscan" sourcetype="csv"
 
-# Check Field Names
+## Check Field Names
 source="83024ServerScan.csv" index="83024serverscan" sourcetype="csv"
 | head 1
 | transpose
 
-## SPL Queries for Analysis
+# SPL Queries for Analysis
 
 
-# Verify Victim IP
+## Verify Victim IP
 source="83024ServerScan.csv" index="83024serverscan" sourcetype="csv"
 | stats count by ip_dst 
 | sort -count
@@ -30,7 +30,7 @@ source="83024ServerScan.csv" index="83024serverscan" ip_dst="203.161.44.208"
         dc(tcp_dstport) as "Ports Targeted"
 
 
-# Top 10 Attackers
+## Top 10 Attackers
 source="83024ServerScan.csv" index="83024serverscan" sourcetype="csv" ip_dst="203.161.44.208"
 | stats count by tcp_dstport 
 | sort -count 
@@ -44,7 +44,7 @@ source="83024ServerScan.csv" index="83024serverscan" ip_dst="203.161.44.208"
 | rename ip_src as "Attacker IP"
 
 
-# Analyze Port Scanning Activity
+## Analyze Port Scanning Activity
 source="83024ServerScan.csv" index="83024serverscan" sourcetype="csv" ip_dst="203.161.44.208"
 | timechart count by ip_src limit=5
 
@@ -53,7 +53,7 @@ source="83024ServerScan.csv" index="83024serverscan" ip_dst="203.161.44.208"
 | timechart span=1h count by ip_src limit=5
 
 
-# Timeline of Scanning Activity
+## Timeline of Scanning Activity
 source="83024ServerScan.csv" index="83024serverscan" sourcetype="csv" ip_dst="203.161.44.208" tcp_flags=*
 | stats count by tcp_flags 
 | sort -count
@@ -78,7 +78,7 @@ source="83024ServerScan.csv" index="83024serverscan" ip_dst="203.161.44.208"
 | stats sum(count) as Total by Service
 | sort -Total
 
-# TCP Flags Analysis
+## TCP Flags Analysis
 source="83024ServerScan.csv" index="83024serverscan" sourcetype="csv" ip_dst="203.161.44.208" tcp_flags=*
 | stats count by tcp_flags 
 | sort -count
@@ -98,7 +98,7 @@ source="83024ServerScan.csv" index="83024serverscan" ip_dst="203.161.44.208" tcp
 | sort -Total
 
 
-# Protocol Distribution
+## Protocol Distribution
 source="83024ServerScan.csv" index="83024serverscan" sourcetype="csv"
 | stats count by ip_proto 
 | sort -count
@@ -116,7 +116,7 @@ source="83024ServerScan.csv" index="83024serverscan" sourcetype="csv"
 | sort -Total
 
 
-# Summary Table & Dashboard SPL
+## Summary Table & Dashboard SPL
 source="83024ServerScan.csv" index="83024serverscan" sourcetype="csv" ip_dst="203.161.44.208"
 | stats count as "Total Packets", 
         dc(ip_src) as "Unique Scanners", 
