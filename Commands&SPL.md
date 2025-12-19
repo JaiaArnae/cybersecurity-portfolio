@@ -44,7 +44,7 @@ source="83024ServerScan.csv" index="83024serverscan" ip_dst="203.161.44.208"
 | rename ip_src as "Attacker IP"
 
 
-## Analyze Port Scanning Activity
+### Analyze Port Scanning Activity
 source="83024ServerScan.csv" index="83024serverscan" sourcetype="csv" ip_dst="203.161.44.208"
 | timechart count by ip_src limit=5
 
@@ -78,7 +78,7 @@ source="83024ServerScan.csv" index="83024serverscan" ip_dst="203.161.44.208"
 | stats sum(count) as Total by Service
 | sort -Total
 
-## TCP Flags Analysis
+### TCP Flags Analysis
 source="83024ServerScan.csv" index="83024serverscan" sourcetype="csv" ip_dst="203.161.44.208" tcp_flags=*
 | stats count by tcp_flags 
 | sort -count
@@ -98,7 +98,7 @@ source="83024ServerScan.csv" index="83024serverscan" ip_dst="203.161.44.208" tcp
 | sort -Total
 
 
-## Protocol Distribution
+### Protocol Distribution
 source="83024ServerScan.csv" index="83024serverscan" sourcetype="csv"
 | stats count by ip_proto 
 | sort -count
@@ -116,7 +116,7 @@ source="83024ServerScan.csv" index="83024serverscan" sourcetype="csv"
 | sort -Total
 
 
-## Summary Table & Dashboard SPL
+### Summary Table & Dashboard SPL
 source="83024ServerScan.csv" index="83024serverscan" sourcetype="csv" ip_dst="203.161.44.208"
 | stats count as "Total Packets", 
         dc(ip_src) as "Unique Scanners", 
@@ -128,13 +128,19 @@ source="83024ServerScan.csv" index="83024serverscan" sourcetype="csv" ip_dst="20
 
 
 
+
+
+
+
+
 # Detection Rules
 
-## High-Volume Port Scanning
+### High-Volume Port Scanning
 source="83024ServerScan.csv" index="83024serverscan" sourcetype="csv"  | bucket _time span=5m | stats dc(tcp_dstport) as unique_ports, count as total_packets by _time, ip_src, ip_dst | where unique_ports > 10 AND total_packets > 50| eval alert_severity="HIGH"| eval alert_message="Port scan detected: ".ip_src." scanned ".unique_ports." ports on ".ip_dst." (".total_packets." packets in 5 min)"| table _time, ip_src, ip_dst, unique_ports, total_packets, alert_severity, alert_message
 
 
-## Coordinated Botnet Scanning
+
+### Coordinated Botnet Scanning
 source="83024ServerScan.csv" index="83024serverscan" sourcetype="csv"
 | eval source_subnet=replace(ip_src, "(\d+\.\d+\.\d+)\.\d+", "\1.0/24")
 | bucket _time span=10m
@@ -145,7 +151,8 @@ source="83024ServerScan.csv" index="83024serverscan" sourcetype="csv"
 | table _time, source_subnet, ip_dst, unique_scanners, ports_scanned, total_packets, alert_severity, alert_message
 
 
-## Critical Service Targeting
+
+### Critical Service Targeting
 source="83024ServerScan.csv" index="83024serverscan" sourcetype="csv"
 | eval critical_service=case(
     tcp_dstport=22, "SSH",
@@ -173,4 +180,17 @@ source="83024ServerScan.csv" index="83024serverscan" sourcetype="csv"
 | table _time, ip_src, ip_dst, critical_service, tcp_dstport, attempts, alert_severity, alert_message
 
 
+
+### Off-Hours Anomalous Activity
+source="83024ServerScan.csv" index="83024serverscan" sourcetype="csv"
+| eval hour=tonumber(strftime(_time, "%H"))
+| eval day_of_week=strftime(_time, "%A")
+| where (hour >= 22 OR hour <= 6) OR day_of_week IN ("Saturday", "Sunday")
+| bucket _time span=1h
+| stats count as packets, dc(ip_src) as unique_sources, dc(tcp_dstport) as ports_scanned by _time, ip_dst
+| where packets > 500 OR unique_sources > 10
+| eval alert_severity="MEDIUM"
+| eval time_period=strftime(_time, "%Y-%m-%d %H:00")
+| eval alert_message="Off-hours scanning detected at ".time_period.": ".packets." packets from ".unique_sources." sources targeting ".ip_dst
+| table _time, time_period, ip_dst, packets, unique_sources, ports_scanned, alert_severity, alert_message
 
