@@ -131,11 +131,46 @@ source="83024ServerScan.csv" index="83024serverscan" sourcetype="csv" ip_dst="20
 ## Detection Rules
 
 # High-Volume Port Scanning
+source="83024ServerScan.csv" index="83024serverscan" sourcetype="csv"  | bucket _time span=5m | stats dc(tcp_dstport) as unique_ports, count as total_packets by _time, ip_src, ip_dst | where unique_ports > 10 AND total_packets > 50| eval alert_severity="HIGH"| eval alert_message="Port scan detected: ".ip_src." scanned ".unique_ports." ports on ".ip_dst." (".total_packets." packets in 5 min)"| table _time, ip_src, ip_dst, unique_ports, total_packets, alert_severity, alert_message
+
 
 # Coordinated Botnet Scanning
+source="83024ServerScan.csv" index="83024serverscan" sourcetype="csv"
+| eval source_subnet=replace(ip_src, "(\d+\.\d+\.\d+)\.\d+", "\1.0/24")
+| bucket _time span=10m
+| stats dc(ip_src) as unique_scanners, dc(tcp_dstport) as ports_scanned, count as total_packets by _time, source_subnet, ip_dst
+| where unique_scanners >= 3 AND ports_scanned > 5
+| eval alert_severity="CRITICAL"
+| eval alert_message="Coordinated botnet scan: ".unique_scanners." IPs from ".source_subnet." scanning ".ip_dst
+| table _time, source_subnet, ip_dst, unique_scanners, ports_scanned, total_packets, alert_severity, alert_message
+
 
 # Critical Service Targeting
+source="83024ServerScan.csv" index="83024serverscan" sourcetype="csv"
+| eval critical_service=case(
+    tcp_dstport=22, "SSH",
+    tcp_dstport=23, "Telnet",
+    tcp_dstport=3389, "RDP",
+    tcp_dstport=445, "SMB",
+    tcp_dstport=1433, "MSSQL",
+    tcp_dstport=3306, "MySQL",
+    tcp_dstport=5432, "PostgreSQL",
+    tcp_dstport=8728, "MikroTik RouterOS",
+    tcp_dstport=27017, "MongoDB",
+    1=1, null()
+)
+| where isnotnull(critical_service)
+| bucket _time span=15m
+| stats count as attempts by _time, ip_src, ip_dst, tcp_dstport, critical_service
+| where attempts > 5
+| eval alert_severity=case(
+    tcp_dstport=3389, "HIGH",
+    tcp_dstport=22, "HIGH",
+    tcp_dstport=8728, "CRITICAL",
+    1=1, "MEDIUM"
+)
+| eval alert_message="Critical service scan: ".ip_src." probing ".critical_service." (port ".tcp_dstport.") on ".ip_dst." - ".attempts." attempts"
+| table _time, ip_src, ip_dst, critical_service, tcp_dstport, attempts, alert_severity, alert_message
 
-# SYN Flood Detection
 
-# Off-Hours Activity
+
