@@ -137,7 +137,7 @@ source="83024ServerScan.csv" index="83024serverscan" sourcetype="csv" ip_dst="20
 
 
 
-## Detection Rules
+# Detection Rules
 
 ### High-Volume Port Scanning
 source="83024ServerScan.csv" index="83024serverscan" sourcetype="csv"  | bucket _time span=5m | stats dc(tcp_dstport) as unique_ports, count as total_packets by _time, ip_src, ip_dst | where unique_ports > 10 AND total_packets > 50| eval alert_severity="HIGH"| eval alert_message="Port scan detected: ".ip_src." scanned ".unique_ports." ports on ".ip_dst." (".total_packets." packets in 5 min)"| table _time, ip_src, ip_dst, unique_ports, total_packets, alert_severity, alert_message
