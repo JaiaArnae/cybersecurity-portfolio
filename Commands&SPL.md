@@ -1,4 +1,4 @@
-Commands and SPL Queries
+# Commands and SPL Queries
 
 ## Powershell
 cd /path/to/the/pcap
@@ -18,7 +18,7 @@ source="83024ServerScan.csv" index="83024serverscan" sourcetype="csv"
 # SPL Queries for Analysis
 
 
-## Verify Victim IP
+### Verify Victim IP
 source="83024ServerScan.csv" index="83024serverscan" sourcetype="csv"
 | stats count by ip_dst 
 | sort -count
@@ -30,7 +30,7 @@ source="83024ServerScan.csv" index="83024serverscan" ip_dst="203.161.44.208"
         dc(tcp_dstport) as "Ports Targeted"
 
 
-## Top 10 Attackers
+### Top 10 Attackers
 source="83024ServerScan.csv" index="83024serverscan" sourcetype="csv" ip_dst="203.161.44.208"
 | stats count by tcp_dstport 
 | sort -count 
@@ -53,7 +53,7 @@ source="83024ServerScan.csv" index="83024serverscan" ip_dst="203.161.44.208"
 | timechart span=1h count by ip_src limit=5
 
 
-## Timeline of Scanning Activity
+### Timeline of Scanning Activity
 source="83024ServerScan.csv" index="83024serverscan" sourcetype="csv" ip_dst="203.161.44.208" tcp_flags=*
 | stats count by tcp_flags 
 | sort -count
@@ -77,6 +77,7 @@ source="83024ServerScan.csv" index="83024serverscan" ip_dst="203.161.44.208"
 )
 | stats sum(count) as Total by Service
 | sort -Total
+
 
 ### TCP Flags Analysis
 source="83024ServerScan.csv" index="83024serverscan" sourcetype="csv" ip_dst="203.161.44.208" tcp_flags=*
@@ -116,6 +117,9 @@ source="83024ServerScan.csv" index="83024serverscan" sourcetype="csv"
 | sort -Total
 
 
+
+
+
 ### Summary Table & Dashboard SPL
 source="83024ServerScan.csv" index="83024serverscan" sourcetype="csv" ip_dst="203.161.44.208"
 | stats count as "Total Packets", 
@@ -133,7 +137,7 @@ source="83024ServerScan.csv" index="83024serverscan" sourcetype="csv" ip_dst="20
 
 
 
-# Detection Rules
+## Detection Rules
 
 ### High-Volume Port Scanning
 source="83024ServerScan.csv" index="83024serverscan" sourcetype="csv"  | bucket _time span=5m | stats dc(tcp_dstport) as unique_ports, count as total_packets by _time, ip_src, ip_dst | where unique_ports > 10 AND total_packets > 50| eval alert_severity="HIGH"| eval alert_message="Port scan detected: ".ip_src." scanned ".unique_ports." ports on ".ip_dst." (".total_packets." packets in 5 min)"| table _time, ip_src, ip_dst, unique_ports, total_packets, alert_severity, alert_message
