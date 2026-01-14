@@ -119,8 +119,6 @@ Identifies distributed scanning attacks where multiple source IPs target the sam
 Full detection queries available in: [`Commands&SPL.md`](Commands&SPL.md)
 
 
-```
-
 **Query Logic:**
 - Aggregates unique destination ports per source IP
 - Threshold: >100 ports triggers alert (tuned to reduce false positives from legitimate network tools)
@@ -165,31 +163,6 @@ Full detection queries available in: [`Commands&SPL.md`](Commands&SPL.md)
 - **Tunable Thresholds**: Port count thresholds (>100) were tuned based on baseline traffic analysis to minimize false positives
 - **Whitelisting**: Excluded authorized vulnerability scanners to prevent alert fatigue
 - **Contextual Enrichment**: Added source/destination context to alerts for faster SOC triage
-
----
-
-## 📂 Repository Structure
-```
-Port-Scanning-Attack-Traffic-Analysis-w-Splunk-and-Wireshark/
-│
-├── README.md                                    # This file
-├── Commands&SPL.md                              # Full SPL query documentation
-├── network-threat-analysis.md                   # Detailed technical analysis
-│
-├── High-Volume_Port_Scanning.csv                # Detection rule export
-├── Coordinated_Botnet_Scanning.csv              # Detection rule export
-├── Critical_Service_Targeting.csv               # Detection rule export (if applicable)
-├── Off-Hours_Anomalous_Activity.csv             # Detection rule export (if applicable)
-│
-└── [Visualizations]
-    ├── Dashboard.png
-    ├── timelineOfScanningActivity.png
-    ├── top20ScannedPorts.png
-    ├── topAttackers.png
-    ├── tcpFlags.png
-    └── verifyVictimIP.png
-```
-
 ---
 
 ## 🚀 Impact & Applications
